@@ -1,0 +1,116 @@
+import pygame
+import random
+import math
+
+# Initialize pygame
+pygame.init()
+
+# Screen dimensions
+SCREEN_WIDTH = 600
+SCREEN_HEIGHT = 800
+
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+
+# Set up the display
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Pinball Game")
+
+# Clock to control the frame rate
+clock = pygame.time.Clock()
+
+# Ball properties
+BALL_RADIUS = 15
+ball_x = SCREEN_WIDTH // 2
+ball_y = SCREEN_HEIGHT // 2
+ball_dx = 4
+ball_dy = -4
+
+# Paddle properties
+PADDLE_WIDTH = 100
+PADDLE_HEIGHT = 20
+paddle_x = (SCREEN_WIDTH - PADDLE_WIDTH) // 2
+paddle_y = SCREEN_HEIGHT - 50
+paddle_speed = 10
+
+# Function to draw the paddle
+def draw_paddle(x, y):
+    pygame.draw.rect(screen, BLUE, (x, y, PADDLE_WIDTH, PADDLE_HEIGHT))
+
+# Function to draw the ball
+def draw_ball(x, y):
+    pygame.draw.circle(screen, RED, (x, y), BALL_RADIUS)
+
+# Function to draw the obstacles
+def draw_obstacles(obstacles):
+    for obs in obstacles:
+        pygame.draw.rect(screen, GREEN, obs)
+
+# Function to check collision between ball and paddle
+def check_collision(ball_x, ball_y, paddle_x, paddle_y):
+    if (paddle_x < ball_x < paddle_x + PADDLE_WIDTH) and (paddle_y < ball_y < paddle_y + PADDLE_HEIGHT):
+        return True
+    return False
+
+# Function to check collision between ball and obstacles
+def check_obstacle_collision(ball_x, ball_y, obstacles):
+    for obs in obstacles:
+        if obs.collidepoint(ball_x, ball_y):
+            return obs
+    return None
+
+# Main game loop
+def game_loop():
+    global ball_x, ball_y, ball_dx, ball_dy, paddle_x, paddle_y
+    run = True
+    obstacles = [pygame.Rect(random.randint(50, SCREEN_WIDTH - 50), random.randint(50, SCREEN_HEIGHT - 300), 50, 20) for _ in range(5)]
+
+    while run:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            paddle_x -= paddle_speed
+            if paddle_x < 0:
+                paddle_x = 0
+        if keys[pygame.K_RIGHT]:
+            paddle_x += paddle_speed
+            if paddle_x > SCREEN_WIDTH - PADDLE_WIDTH:
+                paddle_x = SCREEN_WIDTH - PADDLE_WIDTH
+
+        ball_x += ball_dx
+        ball_y += ball_dy
+
+        if ball_x <= BALL_RADIUS or ball_x >= SCREEN_WIDTH - BALL_RADIUS:
+            ball_dx = -ball_dx
+        if ball_y <= BALL_RADIUS:
+            ball_dy = -ball_dy
+        if ball_y >= SCREEN_HEIGHT - BALL_RADIUS:
+            ball_x = SCREEN_WIDTH // 2
+            ball_y = SCREEN_HEIGHT // 2
+
+        if check_collision(ball_x, ball_y, paddle_x, paddle_y):
+            ball_dy = -ball_dy
+
+        obs = check_obstacle_collision(ball_x, ball_y, obstacles)
+        if obs:
+            obstacles.remove(obs)
+            ball_dy = -ball_dy
+
+        screen.fill(BLACK)
+        draw_paddle(paddle_x, paddle_y)
+        draw_ball(ball_x, ball_y)
+        draw_obstacles(obstacles)
+        pygame.display.flip()
+        clock.tick(60)
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    game_loop()
